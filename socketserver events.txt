@@ -1,0 +1,45 @@
+server ip : 172.104.197.118:444
+
+
+//to join the room
+event: "join-room"
+type: emit
+body : { uid : string , mode:room/team,team:if joining team }
+
+//get all online users
+event: "online-users"
+type: on
+
+
+//send notification
+*to any particular user
+event: "send-notification"
+type: emit
+body : { room:userid , msg:string, mode: 'one' }
+
+*to all user
+event: "send-notification"
+type: emit
+body : {  msg:string, mode: 'all' }
+
+
+//to listen for notifications
+event: "notification"
+type: on
+
+
+//for chat
+
+*send messages
+event: "send-message"
+type: emit
+body : {  room: userid , msg }
+
+*recieve messages
+event: "message"
+type: on
+
+
+//to listen if any user signout
+event: "user-signout"
+type: on
