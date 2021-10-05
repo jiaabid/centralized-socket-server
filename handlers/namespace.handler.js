@@ -11,6 +11,7 @@ module.exports = (io, socket) => {
             socket.once('hello', payload => {
                 console.log(payload)
             })
+            
             //join room
             socket.once("join-room", payload => {
                 payload = JSON.parse(payload)

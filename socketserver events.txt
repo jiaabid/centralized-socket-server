@@ -1,4 +1,4 @@
-server ip : 172.104.197.118:444
+server ip : 172.104.197.118:5000
 
 
 //to join the room
@@ -22,6 +22,16 @@ event: "send-notification"
 type: emit
 body : {  msg:string, mode: 'all' }
 
+*to some user(invite for team challenge)
+event: "send-notification"
+type: emit
+body : {  msg:string, mode: 'some',team:teamID , users:[userid] }
+
+*to team
+event: "send-notification"
+type: emit
+body : {  msg:string, mode: 'team',team:teamID  }
+
 
 //to listen for notifications
 event: "notification"
@@ -29,11 +39,10 @@ type: on
 
 
 //for chat
-
 *send messages
 event: "send-message"
 type: emit
-body : {  room: userid , msg }
+body : {  room: userid/teamId , msg }
 
 *recieve messages
 event: "message"
@@ -43,3 +52,9 @@ type: on
 //to listen if any user signout
 event: "user-signout"
 type: on
+
+
+//create team
+event: "create-team"
+type: emit
+body: { team:teamID } 

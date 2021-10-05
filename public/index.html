@@ -66,7 +66,7 @@
 
     <script>
         // io();
-        const socket = io('/app1')
+        const socket = io()
         // const socket2 = io('/app1')
         // const socket3 = io('/app2')
         const onlineUserDiv = document.getElementById("onlineUsers")
@@ -83,10 +83,16 @@
         // break;
         //             }
         //         }
+        let ids = []
+        localStorage.setItem("ids",JSON.stringify(ids))
         window.onload = () => {
-            uid = uuid()
+            // uid = uuid()
+            uid = 4
             console.log(uid)
-            document.getElementById("myid").innerHTML = uid
+            
+         
+            // document.getElementById("myid").innerHTML = Math.floor(Math.random() * 3) + 1
+            document.getElementById("myid").innerHTML =uid
             //joining the room
 
             register('room');
@@ -118,17 +124,23 @@
                 payload = JSON.parse(payload)
                 onlineUserDiv.innerHTML = ''
                 userSelect.innerHTML = ''
-                Object.keys(payload).forEach(key => {
-                    // console.log(key)
-                    if (payload[key]["uid"] !== uid) {
-                        onlineUserDiv.innerHTML += `
-                <p>${payload[key]["uid"]}</p>
+                payload.forEach(item=>{
+                    onlineUserDiv.innerHTML += `
+                       <p>${item["user_id"]}</p>
                 `
-                        userSelect.innerHTML += `<option>${payload[key]["uid"]}</option>`
-                    }
-
-
+                userSelect.innerHTML += `<option>${item["user_id"]}</option>`
                 })
+                // Object.keys(payload).forEach(key => {
+                //     // console.log(key)
+                //     if (payload[key]["uid"] !== uid) {
+                //         onlineUserDiv.innerHTML += `
+                // <p>${payload[key]["uid"]}</p>
+                // `
+                //         userSelect.innerHTML += `<option>${payload[key]["uid"]}</option>`
+                //     }
+
+
+                // })
                 userSelect.innerHTML += `<option>team1</option>`
             })
 
