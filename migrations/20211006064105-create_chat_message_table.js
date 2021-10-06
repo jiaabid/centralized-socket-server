@@ -2,25 +2,31 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('team_users', {
+    await queryInterface.createTable('chat_message', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      team_id: {
+      chat_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "teams",
+          model: "chats",
           key: 'id'
         }
       },
-      user_id: {
+      message_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "users",
+          model: "messages",
           key: 'id'
         }
+      },
+      type: {
+        type: Sequelize.ENUM(["single", "group"])
+      },
+      status: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: Sequelize.DATE,
       updatedAt: Sequelize.DATE
@@ -28,11 +34,13 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+
+    await queryInterface.dropTable('chat_message');
     /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+    * Add reverting commands here.
+    *
+    * Example:
+    * await queryInterface.dropTable('chat_message');
+    */
   }
 };

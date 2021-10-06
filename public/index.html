@@ -41,8 +41,17 @@
         </div>
     </div>
     <br>
+    <button onclick="groupChat()">group chat</button>
+    <div>
+        Users
+        <select id="userSelect">
+
+        </select>
+        <button onclick="startChat()">Start chat</button>
+    </div>
     <div style="border-style: solid;width: 50rem;">
-        <h3>chat</h3> <select id="userSelect">
+        <h3>chat</h3>
+        <select id="chatSelect">
 
         </select>
         <div id="chat" style="height: 400px;"></div>
@@ -73,39 +82,49 @@
         let uid;
         const chatForm = document.getElementById("chatForm")
         const userSelect = document.getElementById("userSelect")
-        //         function check(mode) {
-        //             switch (mode) {
-        //                 case 'app1':
-        //                     socket2.emit("hello", { msg: "hello from app1" })
-        //                     break;
-        //                     case 'app2':
-        //                     socket3.emit("hello", { msg: "hello from app2" })
-        // break;
-        //             }
-        //         }
+        const chatSelect = document.getElementById('chatSelect');
         let ids = []
-        localStorage.setItem("ids",JSON.stringify(ids))
-        window.onload = () => {
+        let rooms = [];
+        localStorage.setItem("ids", JSON.stringify(ids))
+        window.onload = async () => {
             // uid = uuid()
-            uid = 4
+            uid = prompt("enter your id");
             console.log(uid)
-            
-         
+
+
             // document.getElementById("myid").innerHTML = Math.floor(Math.random() * 3) + 1
-            document.getElementById("myid").innerHTML =uid
+            document.getElementById("myid").innerHTML = uid
             //joining the room
-
             register('room');
-
+            await getChatRooms(uid);
+            register('chatrooms');
+            rooms.forEach(room => chatSelect.innerHTML += `<option>${room["name"]}</option>`)
             //on sending msg
             chatForm.addEventListener('submit', e => {
                 e.preventDefault()
                 // if(userSelect.value == "team1"){
 
                 // }
+                let id = rooms.find(el => el.name == chatSelect.value)["id"]
+                let ids = chatSelect.value.split(':')
+                let to, from;
+                ids.forEach(el => {
+                    if (parseInt(el) == uid) {
+                        from = parseInt(el)
+                    } else {
+                        to = parseInt(el)
+                    }
+                })
+                // let my = ids.filter(el=>pareseInt(el) == uid)
                 socket.emit("send-message", JSON.stringify({
-                    room: userSelect.value,
-                    msg: chatForm.msg.value
+                    room: chatSelect.value,
+                    chat_id: id,
+                    type: 'single',
+                    msg: {
+                        message: chatForm.msg.value,
+                        reciever: to,
+                        sender: from
+                    }
                 }))
                 document.getElementById("chat").innerHTML += `<p>me: ${chatForm.msg.value}</p>`
                 chatForm.reset()
@@ -115,6 +134,7 @@
 
             //on recieving a msg
             socket.on("message", payload => {
+                console.log(payload, "msg")
                 document.getElementById("chat").innerHTML += `<p>other: ${payload}</p>`
             })
 
@@ -124,23 +144,12 @@
                 payload = JSON.parse(payload)
                 onlineUserDiv.innerHTML = ''
                 userSelect.innerHTML = ''
-                payload.forEach(item=>{
+                payload.forEach(item => {
                     onlineUserDiv.innerHTML += `
                        <p>${item["user_id"]}</p>
                 `
-                userSelect.innerHTML += `<option>${item["user_id"]}</option>`
+                    userSelect.innerHTML += `<option>${item["user_id"]}</option>`
                 })
-                // Object.keys(payload).forEach(key => {
-                //     // console.log(key)
-                //     if (payload[key]["uid"] !== uid) {
-                //         onlineUserDiv.innerHTML += `
-                // <p>${payload[key]["uid"]}</p>
-                // `
-                //         userSelect.innerHTML += `<option>${payload[key]["uid"]}</option>`
-                //     }
-
-
-                // })
                 userSelect.innerHTML += `<option>team1</option>`
             })
 
@@ -148,7 +157,7 @@
             //if any user signout
             socket.on("user-signout", (data) => {
                 console.log("this user signout!", data)
-                alert(`${data.user["uid"]} signout`)
+                alert(`${data.user} signout`)
                 socket.emit("get-online-users", {})
             })
 
@@ -213,7 +222,38 @@
                 case 'team':
                     socket.emit("join-room", JSON.stringify({ team: 'team1', mode: 'team' }));
                     break;
+                case 'chatrooms':
+                    socket.emit("join-room", JSON.stringify({ mode: 'chatrooms', rooms }));
+
             }
+        }
+        function startChat() {
+            console.log("start chat")
+            let to = userSelect.value;
+            let from = uid;
+            console.log(to, from);
+            socket.emit("create-chat", JSON.stringify({
+                name: to > from ? `${from}:${to}` : `${to}:${from}`,
+                userId: uid,
+                sendTo: to
+            }))
+
+        }
+        const getChatRooms = async (id) => {
+            let res = await fetch(`/chat?id=${id}`);
+            if (res.status == 200) {
+                rooms = await res.json();
+                console.log(rooms);
+            }
+        }
+
+        function groupChat() {
+            let ids = prompt("Enter ids");
+            ids = ids.split(",");
+            socket.emit("create-group-chat", JSON.stringify({
+                users: ids,
+                name: "group1"
+            }))
         }
         function uuid() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {

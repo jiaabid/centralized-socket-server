@@ -1,7 +1,9 @@
 const { Sequelize, DataTypes } = require("sequelize");
-const sql = require("../database/connection")
+const sql = require("../database/connection");
+const Chats = require("./chat");
+const ChatUser = require("./chatUser");
 
-const User = sql.define("User", {
+const User = sql.define("user", {
     id: {
         type: DataTypes.BIGINT,
         autoIncrement: true,
@@ -15,4 +17,5 @@ const User = sql.define("User", {
   
 },{timestamps: true});
 
+// User.belongsToMany(Chats,{through:"chat_user", foreignKey: "user_id"})
 module.exports = User;

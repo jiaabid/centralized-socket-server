@@ -2,25 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('team_users', {
+    await queryInterface.createTable('chats', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      team_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "teams",
-          key: 'id'
-        }
+      name: {
+        type: Sequelize.STRING,
+        unique: true
       },
-      user_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "users",
-          key: 'id'
-        }
+      startedAt: {
+        type: Sequelize.DATE
       },
       createdAt: Sequelize.DATE,
       updatedAt: Sequelize.DATE
@@ -28,6 +21,8 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+
+    await queryInterface.dropTable('chats');
     /**
      * Add reverting commands here.
      *

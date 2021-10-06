@@ -9,13 +9,14 @@ const chatHandler = require('./handlers/chats.handler');
 const roomHandler = require('./handlers/joinroom.handler');
 const allHandler = require('./handlers/all.handler');
 const userRoutes = require("./src/routes/user");
+const chatRoutes = require('./src/routes/chat')
 require('./src/database/connection');
 require("./src/models/onlineUser")
 app.use(require("express").static(path.join(__dirname, 'public')))
 app.use(require("express").json())
 app.use(cors({ origin: true }))
 app.use("/user", userRoutes);
-
+app.use("/chat",chatRoutes)
 let nsp = "/"
 app.get("/", (req, res) => {
     // nsp = req.query.nsp

@@ -23,7 +23,7 @@ const OnlineUser = sql.define("Onlineuser", {
     updatedAt: Sequelize.DATE
 
 }, {
-    tableName: 'onlineusers',
+    tableName: 'online_users',
     timestamps:true
 });
 // OnlineUser.create({

@@ -1,4 +1,10 @@
+//const { Json } = require("sequelize/types/lib/utils");
+const Chats = require("../src/models/chat");
 const OnlineUser = require("../src/models/onlineUser");
+const { Op } = require('sequelize');
+const ChatUser = require("../src/models/chatUser");
+const Messages = require("../src/models/message");
+const ChatMessage = require("../src/models/chatMessage");
 
 let connectedClients = {}
 const rooms = [];
@@ -16,11 +22,11 @@ module.exports = (io, socket) => {
                     //  return console.log(typeof socketId);
                     const $user = await OnlineUser.create({ user_id: payload.uid, socket_id: socketId });
                     if ($user) {
-                        socket.join(payload.uid);
-                        connectedClients[socket.id] = payload
+                        socket.join(`${payload.uid}`);
+                        // connectedClients[socket.id] = payload
                         console.log(payload.uid, "user connected");
                         let users = await OnlineUser.findAll()
-                        console.log(users)
+                        // console.log(users)
                         //replying with all online users
                         io.emit("online-users", JSON.stringify(users));
                     } else {
@@ -35,9 +41,14 @@ module.exports = (io, socket) => {
 
 
                 break;
-
+            case 'chatrooms':
+                payload["rooms"].forEach(room => {
+                    // console.log(room["chat_id"])
+                    socket.join(`${room["name"]}`)
+                })
+                break;
             case 'team':
-                socket.join(payload.team);
+                socket.join(`${payload.team}`);
                 io.to(payload.team).emit('notification', JSON.stringify({ "msg": `${connectedClients[socket.id]["uid"]} has joined the team` }));
                 socket.to(connectedClients[socket.id]["uid"]).emit('notification', JSON.stringify({ "msg": `You joined the team` }));
                 break;
@@ -48,7 +59,9 @@ module.exports = (io, socket) => {
     socket.on('get-online-users', async () => {
 
         //replying with all online users
-        socket.emit("online-users", JSON.stringify(connectedClients))
+        let users = await OnlineUser.findAll()
+
+        socket.emit("online-users", JSON.stringify(users))
     })
 
 
@@ -83,9 +96,17 @@ module.exports = (io, socket) => {
 
 
     //sending msg
-    socket.on('send-message', payload => {
+    socket.on('send-message', async payload => {
         payload = JSON.parse(payload)
-        socket.to(payload.room).emit('message', payload.msg)
+        // console.log(payload.room)
+        //    console.log( io.sockets.adapter.rooms)
+        let message = await Messages.create(payload.msg)
+        // return console.log(message["dataValues"]["id"])
+        await ChatMessage.create({
+            chat_id: payload.chat_id,
+            message_id: message["dataValues"]["id"]
+        });
+        socket.to(payload.room).emit('message', payload.msg.message)
     });
 
 
@@ -94,39 +115,102 @@ module.exports = (io, socket) => {
         // return console.log(socket.id)
         //get connected sockets
         let socketId = socket.id
-        let user = await OnlineUser.destroy({
-            where:{
-                'socket_id':socketId
+        let userId = await OnlineUser.findOne({
+            attributes: ['id', 'user_id', 'socket_id'],
+            where: {
+                'socket_id': socketId
             }
         });
-        // return console.log(user);
-        // let sockets = await io.allSockets()
-        // let temp = {}
-        // let disconnectedUser;
+        // return console.log(userId["dataValues"]);
+        let user = await OnlineUser.destroy({
+            where: {
+                [Op.or]: [
+                    { 'socket_id': socketId },
+                    { 'user_id': userId["dataValues"]["user_id"] },
 
-        // console.log("before", connectedClients)
-        // console.log(sockets)
+                ]
 
-
-        // //filter the disconnected one
-        // disconnectedUser = Object.keys(connectedClients).find(el => !sockets.has(el))
-        // disconnectedUser = connectedClients[disconnectedUser]
-
-        // //update the connected clients
-        // sockets.forEach(el => {
-        //     temp[el] = connectedClients[el]
-        // })
-        // connectedClients = temp
-
-
-        // console.log("after", connectedClients)
-        // console.log(disconnectedUser)
-
+            }
+        });
         // //broadcast user has signout
-        // io.emit("user-signout", { user: disconnectedUser })
+        io.emit("user-signout", { user: userId["dataValues"]["user_id"] })
     })
 
+    socket.on('create-chat', async payload => {
+        console.log("in create chat")
+        let chat;
+        payload = JSON.parse(payload);
+        // return console.log(payload)
+        let existing = await Chats.findOne({
+            where: {
+                name: payload.name
+            }
+        })
 
+        if (!existing) {
+            chat = await Chats.create({
+                name: payload.name
+            });
+            await ChatUser.create({
+                chat_id: chat["dataValues"].id,
+                user_id: payload.userId
+            })
+            await ChatUser.create({
+                chat_id: chat["dataValues"].id,
+                user_id: payload.sendTo
+            })
+            return console.log(chat);
+        }
+        await ChatUser.create({
+            chat_id: existing["dataValues"].id,
+            user_id: payload.userId
+        })
+        await ChatUser.create({
+            chat_id: existing["dataValues"].id,
+            user_id: payload.sendTo
+        })
+        return console.log(chat);
+        // return console.log(chat)
+
+    })
+    socket.on('create-group-chat', async payload => {
+        console.log("in create chat")
+        let chat;
+        payload = JSON.parse(payload);
+        // return console.log(payload)
+        let existing = await Chats.findOne({
+            where: {
+                name: payload.name
+            }
+        })
+
+        if (!existing) {
+            chat = await Chats.create({
+                name: payload.name
+            });
+            await ChatUser.create({
+                chat_id: chat["dataValues"].id,
+                user_id: payload.userId
+            })
+            await insertUser(payload.users, chat["dataValues"].id)
+
+            return ""
+        } else {
+            await insertUser(payload.users, existing["dataValues"].id)
+
+        }
+        return console.log(chat);
+        // return console.log(chat)
+
+    })
+    async function insertUser(users, id) {
+        users.forEach(async user => {
+            await ChatUser.create({
+                chat_id: id,
+                user_id: user
+            })
+        })
+    }
     //create the team rooms
     socket.on('create-team', async payload => {
         payload = JSON.parse(payload);

@@ -2,28 +2,28 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('team_users', {
+    await queryInterface.createTable('chat_user', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      team_id: {
+      chat_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "teams",
-          key: 'id'
+          model: "chats",
+          key:'id'
         }
       },
-      user_id: {
+      user_id:{
         type: Sequelize.INTEGER,
         references: {
           model: "users",
-          key: 'id'
-        }
+          key:'id'
+        }  
       },
-      createdAt: Sequelize.DATE,
-      updatedAt: Sequelize.DATE
+      createdAt:Sequelize.DATE,
+      updatedAt:Sequelize.DATE
     });
   },
 
