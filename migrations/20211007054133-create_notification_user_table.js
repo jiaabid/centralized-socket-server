@@ -2,28 +2,25 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('chat_message', {
+    await queryInterface.createTable('notification_user', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      chat_id: {
+      notification_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "chats",
+          model: "notifications",
           key: 'id'
         }
       },
-      message_id: {
+      user_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: "messages",
+          model: "users",
           key: 'id'
         }
-      },
-      type: {
-        type: Sequelize.ENUM(["single", "group"])
       },
       status: {
         type: Sequelize.BOOLEAN
@@ -35,7 +32,7 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
 
-    await queryInterface.dropTable('chat_message');
- 
+    await queryInterface.dropTable('notification_user');
+   
   }
 };

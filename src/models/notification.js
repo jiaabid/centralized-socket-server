@@ -1,21 +1,22 @@
 const { Sequelize, DataTypes } = require("sequelize");
-const sql = require("../database/connection")
+const sql = require("../database/connection");
 
-const GroupMessages = sql.define("group_messages", {
+
+const Notifications = sql.define("notifications", {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
       },
-      message: {
+      notification: {
         type: DataTypes.STRING,
-        allowNull: false
+       
       },
-      room: {
+      reciever: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "chats",
+          model: "users",
           key:'id'
         } 
       },
@@ -27,12 +28,12 @@ const GroupMessages = sql.define("group_messages", {
           key:'id'
         } 
       },
-      createdAt: Sequelize.DATE,
-      updatedAt: Sequelize.DATE
+    createdAt: Sequelize.DATE,
+    updatedAt: Sequelize.DATE
 
 }, {
-    tableName: 'group_message',
+    tableName: 'notifications',
     timestamps: true
-});
+})
 
-module.exports = GroupMessages;
+module.exports = Notifications;

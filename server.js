@@ -10,6 +10,7 @@ const roomHandler = require('./handlers/joinroom.handler');
 const allHandler = require('./handlers/all.handler');
 const userRoutes = require("./src/routes/user");
 const chatRoutes = require('./src/routes/chat')
+const notificationRoutes = require("./src/routes/notification")
 require('./src/database/connection');
 require("./src/models/onlineUser")
 app.use(require("express").static(path.join(__dirname, 'public')))
@@ -17,6 +18,7 @@ app.use(require("express").json())
 app.use(cors({ origin: true }))
 app.use("/user", userRoutes);
 app.use("/chat",chatRoutes)
+app.use("/notification",notificationRoutes)
 let nsp = "/"
 app.get("/", (req, res) => {
     // nsp = req.query.nsp
@@ -48,7 +50,7 @@ io.on('connection', (socket) => {
 // });
 
 
-httpServer.listen(4444, () => console.log("server started"))
+httpServer.listen(5000, () => console.log("server started"))
 
 
 // io.of('/app1').on("connection",onConnection)

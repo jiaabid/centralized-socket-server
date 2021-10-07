@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sql = require("../database/connection")
 
-const ChatMessage = sql.define("chat_message", {
+const GroupChatMessage = sql.define("group_chat_message", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -21,8 +21,12 @@ const ChatMessage = sql.define("chat_message", {
       key: 'id'
     }
   },
-  type: {
-    type: DataTypes.ENUM(['single', 'group']),
+  user_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: "users",
+      key: 'id'
+    }
   },
   status: {
     type: DataTypes.BOOLEAN,
@@ -32,8 +36,8 @@ const ChatMessage = sql.define("chat_message", {
   updatedAt: Sequelize.DATE
 
 }, {
-  tableName: 'chat_message',
+  tableName: 'group_chat_message',
   timestamps: true
 });
 
-module.exports = ChatMessage;
+module.exports = GroupChatMessage;

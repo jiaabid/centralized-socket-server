@@ -1,10 +1,16 @@
 server ip : 172.104.197.118:5000
 
 
-//to join the room
+//to join the room as you login
 event: "join-room"
 type: emit
-body : { uid : string , mode:room/team,team:if joining team }
+body : { uid : string , mode:room }
+
+//connect to your chatrooms as you connect
+event: "join-room"
+type: emit
+body : {  mode: 'chatrooms', rooms }
+
 
 //get all online users
 event: "online-users"
@@ -12,49 +18,101 @@ type: on
 
 
 //send notification
-*to any particular user
 event: "send-notification"
 type: emit
-body : { room:userid , msg:string, mode: 'one' }
+body :{notification: [{
+                        reciever: id,
+                        sender: uid,
+                        notification: 'Hello! its a notification.'
+                    }]}
 
-*to all user
-event: "send-notification"
-type: emit
-body : {  msg:string, mode: 'all' }
 
-*to some user(invite for team challenge)
-event: "send-notification"
-type: emit
-body : {  msg:string, mode: 'some',team:teamID , users:[userid] }
 
-*to team
-event: "send-notification"
-type: emit
-body : {  msg:string, mode: 'team',team:teamID  }
 
 
 //to listen for notifications
 event: "notification"
 type: on
 
+//confirmation of notification recieved
+event: "notification-recieve"
+type: emit
+body:{
+         notificationId,
+         userId,
+         status: true
+
+}
 
 //for chat
-*send messages
+*create chat room (one-to-one chat)
+event: "create-chat"
+type: emit
+body:{
+          name: 'userId1:userId2'(concatenated reciver and sender id in sorted manner),
+          userId: uid,
+          sendTo: to
+     }
+
+*create group chat room (group chat)
+event: "create-group-chat"
+type: emit
+body:{
+        users: [userId1,userId2,userId3],
+        name
+     }
+
+
+*send messages 
 event: "send-message"
 type: emit
-body : {  room: userid/teamId , msg }
+body :  {           room: chatroom name,
+                    chat_id: id,
+                    type: 'single'/'group',
+                    msg: {message,reciever,sender}
+        }
+
 
 *recieve messages
 event: "message"
 type: on
 
+//confirmation of message recieved (emit right after you listen for message)
+event: "message-recieve"
+type: emit
+body:{
+         messageId,
+         chatId,
+         status: true,
+         type:"single"/"group",
+         userId
+
+}
 
 //to listen if any user signout
 event: "user-signout"
 type: on
 
 
-//create team
-event: "create-team"
-type: emit
-body: { team:teamID } 
+APIS
+
+#get users
+http://localhost:4444/user
+
+#get chat rooms
+http://localhost:4444/chat?id=userId
+
+#get messages of one-to-one chat
+http://localhost:4444/chat/message?id=chatId&mode=recieved
+(mode:
+all = for all messages 
+pending = messages which are not recieved
+recieved 
+)
+
+#get messages of group
+http://localhost:4444/chat/message/group?id=chatId
+
+#get notifications
+http://localhost:4444/notification?id=userId
+

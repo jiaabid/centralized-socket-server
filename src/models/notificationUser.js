@@ -1,39 +1,37 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sql = require("../database/connection")
 
-const ChatMessage = sql.define("chat_message", {
+const NotificationUser = sql.define("notification_user", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true
   },
-  chat_id: {
-    type: DataTypes.INTEGER,
+  notification_id: {
+    type: Sequelize.INTEGER,
     references: {
-      model: "chats",
+      model: "notifications",
       key: 'id'
     }
   },
-  message_id: {
-    type: DataTypes.INTEGER,
+  user_id: {
+    type: Sequelize.INTEGER,
     references: {
-      model: "messages",
+      model: "users",
       key: 'id'
     }
   },
-  type: {
-    type: DataTypes.ENUM(['single', 'group']),
-  },
+  
   status: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    type: Sequelize.BOOLEAN,
+    defaultValue:false
   },
   createdAt: Sequelize.DATE,
   updatedAt: Sequelize.DATE
 
 }, {
-  tableName: 'chat_message',
+  tableName: 'notification_user',
   timestamps: true
 });
 
-module.exports = ChatMessage;
+module.exports = NotificationUser;

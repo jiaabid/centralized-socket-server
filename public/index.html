@@ -21,7 +21,7 @@
         <button onclick="sendNotification('one')" id="nBtn">
             Send notification
         </button>
-        <button onclick="sendNotification('all')">
+        <button onclick="sendNotification('team')">
             broadcast notification
         </button>
         <button onclick="sendNotification('some')">
@@ -56,8 +56,9 @@
         </select>
         <div id="chat" style="height: 400px;"></div>
         <form id="chatForm">
-            <input type="text" name="msg" style="width: 40rem; height: 40px;"><button type="submit"
-                style=" height: 42px;">send</button>
+            <input type="text" name="msg" style="width: 40rem; height: 40px;">
+            <button type="submit" style=" height: 42px;">send</button>
+            <button type="button" style=" height: 42px;" id="groupSend">send to group</button>
         </form>
     </div>
     <!-- <button onclick="check('app1')">App1</button>
@@ -83,6 +84,7 @@
         const chatForm = document.getElementById("chatForm")
         const userSelect = document.getElementById("userSelect")
         const chatSelect = document.getElementById('chatSelect');
+        const groupSend = document.getElementById("groupSend")
         let ids = []
         let rooms = [];
         localStorage.setItem("ids", JSON.stringify(ids))
@@ -97,7 +99,9 @@
             //joining the room
             register('room');
             await getChatRooms(uid);
-            register('chatrooms');
+            if(rooms.length > 0){
+                register('chatrooms');
+            }
             rooms.forEach(room => chatSelect.innerHTML += `<option>${room["name"]}</option>`)
             //on sending msg
             chatForm.addEventListener('submit', e => {
@@ -130,12 +134,39 @@
                 chatForm.reset()
             })
 
+            groupSend.addEventListener('click', e => {
+                e.preventDefault();
+                let id = rooms.find(el => el.name == chatSelect.value)["id"]
+                socket.emit("send-message", JSON.stringify({
+                    room: chatSelect.value,
+                    chat_id: id,
+                    type: 'group',
+                    msg: {
+                        message: chatForm.msg.value,
+                        room: id,
+                        sender: uid
+                    }
+                }))
+                document.getElementById("chat").innerHTML += `<p>me: ${chatForm.msg.value}</p>`
+                chatForm.reset()
+            })
+
 
 
             //on recieving a msg
             socket.on("message", payload => {
+                payload = JSON.parse(payload);
                 console.log(payload, "msg")
-                document.getElementById("chat").innerHTML += `<p>other: ${payload}</p>`
+                document.getElementById("chat").innerHTML += `<p>other: ${payload.msg}</p>`
+
+                //update the message status when seen 
+                socket.emit("message-recieve", JSON.stringify({
+                    messageId: payload.messageId,
+                    chatId: payload.chatId,
+                    status: true,
+                    type:payload.type,
+                     userId:uid
+                }))
             })
 
             //getting all online users
@@ -170,7 +201,11 @@
                     `
                 } else {
                     alert(payload['msg']);
-
+                    socket.emit("notification-recieve", JSON.stringify({
+                        notificationId: payload.notification_id,
+                        userId: uid,
+                        status: true
+                    }))
                 }
             })
 
@@ -184,18 +219,45 @@
                 let id = prompt("Enter the uid")
                 console.log(id)
                 socket.emit('send-notification', JSON.stringify({
-                    room: id,
-                    msg: 'Hello! its a notification.',
-                    mode: 'one'
+                    notification: [{
+                        reciever: id,
+                        sender: uid,
+                        notification: 'Hello! its a notification.'
+                    }],
+                    type: 'single'
+                    // room: id,
+                    // msg: 'Hello! its a notification.',
+                    // mode: 'one'
                 }))
             } else if (mode == 'some') {
                 let id = prompt('Enter all ids with comma seperated')
                 let users = id.split(',');
                 console.log(users)
+                let items = []
+                users.forEach(user => {
+                    items.push({
+
+                        reciever: user,
+                        sender: uid,
+                        notification: 'Hello! its a notification a to some user.'
+
+                    })
+                })
                 socket.emit('send-notification', JSON.stringify({
-                    users,
-                    msg: 'invite to join team1',
-                    mode: 'some'
+                    notification: items,
+                    type: "single",
+
+                }))
+            } else if (mode == 'team') {
+
+                socket.emit('send-notification', JSON.stringify({
+                    notification: {
+                        sender: uid,
+                        room: rooms.find(el => el.name == "group1")["id"],
+                        notification: "this is a team notification!",
+                    },
+                    type: "group",
+
                 }))
             }
             else {

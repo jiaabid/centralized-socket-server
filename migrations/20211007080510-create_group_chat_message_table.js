@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('chat_message', {
+    await queryInterface.createTable('group_chat_message', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -22,20 +22,24 @@ module.exports = {
           key: 'id'
         }
       },
-      type: {
-        type: Sequelize.ENUM(["single", "group"])
+      user_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "users",
+          key: 'id'
+        }
       },
-      status: {
-        type: Sequelize.BOOLEAN
-      },
-      createdAt: Sequelize.DATE,
-      updatedAt: Sequelize.DATE
-    });
+        status: {
+          type: Sequelize.BOOLEAN
+        },
+        createdAt: Sequelize.DATE,
+        updatedAt: Sequelize.DATE
+      });
   },
 
   down: async (queryInterface, Sequelize) => {
 
-    await queryInterface.dropTable('chat_message');
- 
+    await queryInterface.dropTable('group_chat_message');
+
   }
 };
