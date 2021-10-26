@@ -36,12 +36,12 @@ module.exports = (io, socket) => {
                             socket_id: socket.id
                         })
                     console.log(connectedUsers)
-                    new Promise((resolve,reject)=>{
+                    new Promise((resolve, reject) => {
                         socket.join(`${payload.uid}`);
                         resolve()
-                    }).then(_=>io.emit("online-users", JSON.stringify(connectedUsers)))
-                   
-                    
+                    }).then(_ => io.emit("online-users", JSON.stringify(connectedUsers)))
+
+
 
                     let existingUser = await OnlineUser.findOne({
                         where: {
@@ -99,7 +99,7 @@ module.exports = (io, socket) => {
     socket.on('send-notification', async payload => {
         payload = JSON.parse(payload)
         await insertNotification(payload.notification, socket);
-    
+
     })
 
     //sending bulk notifications
@@ -118,7 +118,7 @@ module.exports = (io, socket) => {
 
             }))
         });
-    
+
     }
 
     //notification is recieved
@@ -218,6 +218,9 @@ module.exports = (io, socket) => {
         // return console.log(socket.id)
         //get connected sockets
         let socketId = socket.id
+        let userIndex = connectedUsers.findIndex(el => el.socket_id == socketId);
+        connectedUsers.splice(userIndex,1);
+      
         let userId = await OnlineUser.findOne({
             attributes: ['id', 'user_id', 'socket_id'],
             where: {
