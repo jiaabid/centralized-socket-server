@@ -10,10 +10,10 @@ const OnlineUser = sql.define("Onlineuser", {
     user_id: {
         type: DataTypes.INTEGER,
         unique: true,
-        references: {
-            model: "users",
-            key: 'id'
-        }
+        // references: {
+        //     model: "users",
+        //     key: 'id'
+        // }
 
     },
     socket_id: {

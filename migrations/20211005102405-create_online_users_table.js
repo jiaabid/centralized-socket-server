@@ -13,10 +13,10 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         unique:true,
-        references: {
-          model: "users",
-          key:'id'
-        }
+        // references: {
+        //   model: "users",
+        //   key:'id'
+        // }
       },
       socket_id:{
         type:Sequelize.STRING

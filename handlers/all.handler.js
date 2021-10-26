@@ -12,6 +12,7 @@ const NotificationUser = require("../src/models/notificationUser");
 const GroupChatMessage = require("../src/models/groupChatMessage");
 
 let connectedClients = {}
+let connectedUsers = [];
 const rooms = [];
 const ids = []
 module.exports = (io, socket) => {
@@ -24,15 +25,46 @@ module.exports = (io, socket) => {
                 try {
 
                     let socketId = socket.id;
-                    const $user = await OnlineUser.create({ user_id: payload.uid, socket_id: socketId });
-                    if ($user) {
+                    let user;
+                    connectedUsers.find(user => user.user_id == payload.uid) ? connectedUsers.find(user => {
+                        if (user.user_id == payload.uid) {
+                            user.socket_id = socket.id
+                        }
+                    }) :
+                        connectedUsers.push({
+                            user_id: payload.uid,
+                            socket_id: socket.id
+                        })
+                    console.log(connectedUsers)
+                    new Promise((resolve,reject)=>{
                         socket.join(`${payload.uid}`);
-                        // connectedClients[socket.id] = payload
+                        resolve()
+                    }).then(_=>io.emit("online-users", JSON.stringify(connectedUsers)))
+                   
+                    
+
+                    let existingUser = await OnlineUser.findOne({
+                        where: {
+                            user_id: payload.uid
+                        }
+                    });
+                    console.log(existingUser)
+                    if (existingUser) {
+                        user = await OnlineUser.update({ socket_id: socketId }, {
+                            where: {
+                                user_id: payload.uid
+                            }
+                        });
+                    } else {
+                        user = await OnlineUser.create({ user_id: payload.uid, socket_id: socketId });
+
+                    }
+                    if (user) {
+                        socket.join(`${payload.uid}`);
                         console.log(payload.uid, "user connected");
                         let users = await OnlineUser.findAll()
-                  
+
                         //replying with all online users
-                        io.emit("online-users", JSON.stringify(users));
                     } else {
                         console.log("error")
                     }
@@ -42,19 +74,14 @@ module.exports = (io, socket) => {
 
                 break;
             case 'chatrooms':
-                if(payload["rooms"]){
+                if (payload["rooms"]) {
                     payload["rooms"].forEach(room => {
                         // console.log(room["chat_id"])
                         socket.join(`${room["name"]}`)
                     })
                 }
-              
+
                 break;
-            // case 'team':
-            //     socket.join(`${payload.team}`);
-            //     io.to(payload.team).emit('notification', JSON.stringify({ "msg": `${connectedClients[socket.id]["uid"]} has joined the team` }));
-            //     socket.to(connectedClients[socket.id]["uid"]).emit('notification', JSON.stringify({ "msg": `You joined the team` }));
-            //     break;
         }
     });
 
@@ -72,41 +99,18 @@ module.exports = (io, socket) => {
     socket.on('send-notification', async payload => {
         payload = JSON.parse(payload)
         await insertNotification(payload.notification, socket);
-        //no need of type all going same way
-        // switch (payload.type) {
-        //     case 'single':
-              
-              
-        //         break;
-        //         //
-        //         case 'group':
-        //             await insertNotification(payload.notification, payload.type, socket);
-        //             break;
-                //not in use
-            // case 'all':
-            //     io.emit("notification", JSON.stringify({
-            //         'msg': payload.msg
-            //     }))
-            //     break;
-            // case 'some':
-            //     payload['users'].forEach(u => io.to(u).emit('notification', JSON.stringify({
-            //         'msg': payload.msg,
-            //         'team': payload.team
-            //     })));
-            //     break;
-          
-        // }
+    
     })
 
     //sending bulk notifications
-    async function insertNotification(notifications,  socket) {
+    async function insertNotification(notifications, socket) {
         let snap = await Notifications.bulkCreate(notifications);
 
         notifications.forEach(async item => {
             await NotificationUser.create({
                 notification_id: snap[0]["dataValues"]["id"],
                 user_id: item.reciever,
-            
+
             });
             socket.to(item.reciever).emit("notification", JSON.stringify({
                 'msg': item.notification,
@@ -114,32 +118,7 @@ module.exports = (io, socket) => {
 
             }))
         });
-        // switch (type) {
-        //     case 'single':
-        //         let snap = await Notifications.bulkCreate(notifications);
-
-        //         notifications.forEach(async item => {
-        //             await NotificationUser.create({
-        //                 notification_id: snap[0]["dataValues"]["id"],
-        //                 user_id: item.reciever,
-        //                 type
-        //             });
-        //             socket.to(item.reciever).emit("notification", JSON.stringify({
-        //                 'msg': item.notification,
-        //                 notification_id: snap[0]["dataValues"]["id"]
-
-        //             }))
-        //         });
-        //         break;
-        //     default:
-        //         let snap2 = await GroupNotifications.create(notifications)
-        //         let room = await Chats.findOne({ where: { 'id': notifications.room } })
-        //         socket.to(room["dataValues"]["name"]).emit("notification", JSON.stringify({
-        //             'msg': notifications.notification,
-        //             notification_id: snap2["dataValues"]["id"]
-
-        //         }))
-        // }
+    
     }
 
     //notification is recieved
@@ -186,7 +165,7 @@ module.exports = (io, socket) => {
                 });
                 users.forEach(async user => {
                     let status = false;
-                    if(user['dataValues']['user_id'] == payload.msg.sender){
+                    if (user['dataValues']['user_id'] == payload.msg.sender) {
                         status = true
                     }
                     await GroupChatMessage.create({

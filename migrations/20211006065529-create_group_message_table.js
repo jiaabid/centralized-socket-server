@@ -23,10 +23,10 @@ module.exports = {
       sender:{
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "users",
-          key:'id'
-        } 
+        // references: {
+        //   model: "users",
+        //   key:'id'
+        // } 
       },
       createdAt: Sequelize.DATE,
       updatedAt: Sequelize.DATE

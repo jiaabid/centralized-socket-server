@@ -15,18 +15,18 @@ const Notifications = sql.define("notifications", {
       reciever: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users",
-          key:'id'
-        } 
+        // references: {
+        //   model: "users",
+        //   key:'id'
+        // } 
       },
       sender:{
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users",
-          key:'id'
-        } 
+        // references: {
+        //   model: "users",
+        //   key:'id'
+        // } 
       },
     createdAt: Sequelize.DATE,
     updatedAt: Sequelize.DATE

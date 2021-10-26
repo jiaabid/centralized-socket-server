@@ -2,7 +2,8 @@ const sequelize = require('sequelize');
 
 const sqlInstance = new sequelize('socket_server', 'root', '', {
     host: "127.0.0.1",
-    dialect: "mysql"
+    dialect: "mysql",
+    logging: false
 });
 const test = async () => {
     try {

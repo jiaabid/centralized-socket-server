@@ -21,11 +21,11 @@
         <button onclick="sendNotification('one')" id="nBtn">
             Send notification
         </button>
-        <button onclick="sendNotification('team')">
+        <!-- <button onclick="sendNotification('team')">
             broadcast notification
-        </button>
+        </button> -->
         <button onclick="sendNotification('some')">
-            invite Team
+            group notification
         </button>
 
 
@@ -98,11 +98,13 @@
             document.getElementById("myid").innerHTML = uid
             //joining the room
             register('room');
+            socket.emit('get-online-users')
             await getChatRooms(uid);
-            if(rooms.length > 0){
+            if (rooms.length > 0) {
                 register('chatrooms');
+                rooms.forEach(room => chatSelect.innerHTML += `<option>${room["name"]}</option>`)
             }
-            rooms.forEach(room => chatSelect.innerHTML += `<option>${room["name"]}</option>`)
+           
             //on sending msg
             chatForm.addEventListener('submit', e => {
                 e.preventDefault()
@@ -164,14 +166,18 @@
                     messageId: payload.messageId,
                     chatId: payload.chatId,
                     status: true,
-                    type:payload.type,
-                     userId:uid
+                    type: payload.type,
+                    userId: uid
                 }))
+            })
+
+            socket.on('hello', () => {
+                console.log('hello')
             })
 
             //getting all online users
             socket.on('online-users', payload => {
-                console.log(payload)
+                console.log("online",payload)
                 payload = JSON.parse(payload)
                 onlineUserDiv.innerHTML = ''
                 userSelect.innerHTML = ''
@@ -223,11 +229,8 @@
                         reciever: id,
                         sender: uid,
                         notification: 'Hello! its a notification.'
-                    }],
-                    type: 'single'
-                    // room: id,
-                    // msg: 'Hello! its a notification.',
-                    // mode: 'one'
+                    }]
+
                 }))
             } else if (mode == 'some') {
                 let id = prompt('Enter all ids with comma seperated')
@@ -244,8 +247,7 @@
                     })
                 })
                 socket.emit('send-notification', JSON.stringify({
-                    notification: items,
-                    type: "single",
+                    notification: items
 
                 }))
             } else if (mode == 'team') {

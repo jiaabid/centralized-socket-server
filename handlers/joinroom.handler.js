@@ -1,78 +1,121 @@
 let connectedClients = {}
-let clients = [];
+let connectedUsers = [];
+const OnlineUser = require("../src/models/onlineUser");
+const { Op } = require('sequelize');
 
-module.exports = (io, socket, nsp) => {
+module.exports = (io, socket) => {
 
-    clients.push({
-        "namespace": nsp,
-        "connectedClients": connectedClients
-    })
-    let mynsp = clients.find(el => el.namespace == nsp)
-
+    io.emit('hello')
     //join room
-    socket.on("join-room", payload => {
+    socket.on("join-room", async payload => {
         payload = JSON.parse(payload)
         switch (payload.mode) {
             case 'room':
-                socket.join(payload.uid)
-                mynsp.connectedClients[socket.id] = payload
-                console.log(payload.uid, "user connected");
-                //replying with all online users
-                io.emit("online-users", JSON.stringify(mynsp.connectedClients));
-                break;
+                try {
 
-            case 'team':
-                socket.join(payload.team);
-                io.to(payload.team).emit('notification', JSON.stringify({ "msg": `${mynsp.connectedClients[socket.id]["uid"]} has joined the team` }));
-                socket.to(mynsp.connectedClients[socket.id]["uid"]).emit('notification', JSON.stringify({ "msg": `You joined the team` }));
+                    let socketId = socket.id;
+                    let user;
+                    //push user to temporary data structure
+                    connectedUsers.find(user => user.user_id == payload.uid) ? connectedUsers.find(user => {
+                        if (user.user_id == payload.uid) {
+                            user.socket_id = socket.id
+                        }
+                    }) :
+                        connectedUsers.push({
+                            user_id: payload.uid,
+                            socket_id: socket.id
+                        })
+                    // const sockets = await io.fetchSockets();
+                    // console.log("sockets",sockets)
+                    console.log('users', connectedUsers)
+                    //join the room
+                    socket.join(`${payload.uid}`);
+
+                    console.log(io.sockets.adapter.rooms)
+                    //replying with all online users
+                    // socket.emit("online-users", JSON.stringify(connectedUsers));
+                    // io.emit('hello')
+
+                    io.emit("online-users", JSON.stringify(connectedUsers));
+                    let existingUser = await OnlineUser.findOne({
+                        where: {
+                            user_id: payload.uid
+                        }
+                    });
+
+                    if (existingUser) {
+                        user = await OnlineUser.update({ socket_id: socketId }, {
+                            where: {
+                                user_id: payload.uid
+                            }
+                        });
+                    } else {
+                        user = await OnlineUser.create({ user_id: payload.uid, socket_id: socketId });
+
+                    }
+
+                    //if error in creating user then send all the old connected users
+                    if (!user) {
+                        socket.join(`${payload.uid}`);
+                        let users = await OnlineUser.findAll()
+
+                        //replying with all online users
+                        io.emit("online-users", JSON.stringify(users));
+                    }
+                    // else {
+                    //     console.log("error")
+                    // }
+                } catch (err) {
+                    console.log(err);
+                }
+
+                break;
+            case 'chatrooms':
+                if (payload["rooms"]) {
+                    payload["rooms"].forEach(room => {
+                        // console.log(room["chat_id"])
+                        socket.join(`${room["name"]}`)
+                    })
+                }
+
                 break;
         }
     });
 
+
     //on disconnect remove the user 
     socket.on("disconnect", async () => {
-
+        // return console.log(socket.id)
         //get connected sockets
-        let sockets = await io.allSockets()
-        let temp = {}
-        let disconnectedUser;
+        let socketId = socket.id
+        let userId = await OnlineUser.findOne({
+            attributes: ['id', 'user_id', 'socket_id'],
+            where: {
+                'socket_id': socketId
+            }
+        });
+        // return console.log(userId["dataValues"]);
+        let user = await OnlineUser.destroy({
+            where: {
+                [Op.or]: [
+                    { 'socket_id': socketId },
+                    { 'user_id': userId["dataValues"]["user_id"] },
 
-        console.log("before", mynsp.connectedClients)
-        console.log(sockets)
+                ]
 
-
-        //filter the disconnected one
-        disconnectedUser = Object.keys(mynsp.connectedClients).find(el => !sockets.has(el))
-        // console.log(disconnectedUser);
-        disconnectedUser = mynsp.connectedClients[disconnectedUser]
-
-        //update the connected clients
-        sockets.forEach(el => {
-            temp[el] = mynsp.connectedClients[el]
-        })
-        mynsp.connectedClients = temp
-
-
-        console.log("after", mynsp.connectedClients)
-        console.log(disconnectedUser)
-
-        //broadcast user has signout
-        io.emit("user-signout", { user: disconnectedUser })
+            }
+        });
+        // //broadcast user has signout
+        io.emit("user-signout", { user: userId["dataValues"]["user_id"] })
     })
 
+    //request for all online users
+    socket.on('get-online-users', async () => {
 
-    //create the team rooms
-    socket.on('create-team', async payload => {
-        payload = JSON.parse(payload);
-        socket.join(payload.team)
-        console.log(await io.allSockets(), 'rooms')
-        console.log(mynsp.connectedClients[socket.id])
-        io.to(mynsp.connectedClients[socket.id].uid).emit('notification', JSON.stringify({ 'msg': 'Team created!' }))
-    });
+        //replying with all online users
+        // let users = await OnlineUser.findAll()
 
-    //join team
-    socket.on('join-team', payload => {
-        payload = JSON.parse(payload);
-        socket.join(payload.team);
-    });
+        socket.emit("online-users", JSON.stringify(connectedUsers))
+    })
+
 }

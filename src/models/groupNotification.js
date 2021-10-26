@@ -23,10 +23,10 @@ const GroupNotifications = sql.define("group_notification", {
       sender:{
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users",
-          key:'id'
-        } 
+        // references: {
+        //   model: "users",
+        //   key:'id'
+        // } 
       },
     createdAt: Sequelize.DATE,
     updatedAt: Sequelize.DATE

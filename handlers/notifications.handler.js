@@ -1,40 +1,47 @@
-module.exports = (io, socket, nsp) => {
+const Notifications = require("../src/models/notification");
+const NotificationUser = require("../src/models/notificationUser");
 
 
-    //send notification
-    socket.on('send-notification', payload => {
+module.exports = (io, socket) => {
+
+
+      //send notification
+      socket.on('send-notification', async payload => {
         payload = JSON.parse(payload)
+        await insertNotification(payload.notification, socket);
+    
+    })
 
-        switch (payload.mode) {
+    //sending bulk notifications
+    async function insertNotification(notifications, socket) {
+        let snap = await Notifications.bulkCreate(notifications);
 
-            //one to one notifications
-            case 'one':
-                socket.to(payload.room).emit("notification", JSON.stringify({
-                    'msg': payload.msg
-                }))
-                break;
+        notifications.forEach(async item => {
+            await NotificationUser.create({
+                notification_id: snap[0]["dataValues"]["id"],
+                user_id: item.reciever,
 
-            //system notifications
-            case 'all':
-                io.emit("notification", JSON.stringify({
-                    'msg': payload.msg
-                }))
-                break;
+            });
+            socket.to(item.reciever).emit("notification", JSON.stringify({
+                'msg': item.notification,
+                notification_id: snap[0]["dataValues"]["id"]
 
-            //notifications for particular users ::requesting teams for challenge
-            case 'some':
-                payload['users'].forEach(u => io.to(u).emit('notification', JSON.stringify({
-                    'msg': payload.msg,
-                    'team': 'team1'
-                })));
-                break;
+            }))
+        });
+    
+    }
 
-            //notifications for particular teams
-            case 'team':
-                io.to(payload.team).emit('notification', JSON.stringify({
-                    'msg': payload.msg
-                }));
-                break;
-        }
-    });
+    //notification is recieved
+    socket.on("notification-recieve", async payload => {
+        payload = JSON.parse(payload);
+
+        await NotificationUser.update({ status: payload.status }, {
+            where: {
+                notification_id: payload.notificationId,
+                user_id: payload.userId
+            }
+        })
+    })
+
+
 }

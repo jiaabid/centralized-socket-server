@@ -23,5 +23,5 @@ GroupMessages.belongsToMany(Chats, { as: 'ChatRooms', through: { model: GroupCha
 Chats.belongsToMany(GroupMessages, { as: 'GroupMessages', through: { model: GroupChatMessage, unique: false }, foreignKey: 'chat_id' });
 
 
-User.belongsToMany(Notifications, { as: 'Notifications', through: { model: NotificationUser, unique: false }, foreignKey: 'user_id' });
-Notifications.belongsToMany(User, { as: 'users', through: { model: NotificationUser, unique: false }, foreignKey: 'notification_id' });
+
+
