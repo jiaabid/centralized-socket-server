@@ -6,13 +6,13 @@ const GroupMessages = require("./groupMessage");
 const Messages = require("./message");
 const Notifications = require("./notification");
 const NotificationUser = require("./notificationUser");
-const User = require("./user");
+// const User = require("./user");
 
 // User.belongsToMany(Chats, { through: 'chat_user' ,as:"users",foreignKey:'user_id' });
 // Chats.belongsToMany(User, { through: 'chat_user',as:"chats",foreignKey:'chat_id' })
 
-User.belongsToMany(Chats, { as: 'Chats', through: { model: ChatUser, unique: false }, foreignKey: 'user_id' });
-Chats.belongsToMany(User, { as: 'Users', through: { model: ChatUser, unique: false }, foreignKey: 'chat_id' });
+// User.belongsToMany(Chats, { as: 'Chats', through: { model: ChatUser, unique: false }, foreignKey: 'user_id' });
+// Chats.belongsToMany(User, { as: 'Users', through: { model: ChatUser, unique: false }, foreignKey: 'chat_id' });
 
 
 Messages.belongsToMany(Chats, { as: 'Rooms', through: { model: ChatMessage, unique: false }, foreignKey: 'message_id' });

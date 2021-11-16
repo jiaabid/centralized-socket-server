@@ -206,7 +206,8 @@
                     <p>${payload.msg}</p><button onclick="register('team')">Join team</button>
                     `
                 } else {
-                    alert(payload['msg']);
+                    console.log(payload['data'])
+                    alert(payload['msg'] );
                     socket.emit("notification-recieve", JSON.stringify({
                         notificationId: payload.notification_id,
                         userId: uid,
@@ -224,32 +225,47 @@
             if (mode == 'one') {
                 let id = prompt("Enter the uid")
                 console.log(id)
-                socket.emit('send-notification', JSON.stringify({
-                    notification: [{
-                        reciever: id,
-                        sender: uid,
-                        notification: 'Hello! its a notification.'
-                    }]
 
-                }))
+                //payload after modification
+                let notification = {
+                    ids:[id],
+                    sender:uid,
+                    msg:"hello new notification",
+                    type:'any',
+                    data: JSON.stringify({
+                        team:1,
+                        members:[1,2,3,4]
+                    })
+                }
+
+                //old payload
+                // notification: [{
+                //         reciever: id,
+                //         sender: uid,
+                //         ms: 'Hello! its a notification.'
+                //     }]
+                socket.emit('send-notification', JSON.stringify(notification))
             } else if (mode == 'some') {
                 let id = prompt('Enter all ids with comma seperated')
                 let users = id.split(',');
                 console.log(users)
                 let items = []
-                users.forEach(user => {
-                    items.push({
+                notification = {
+                    ids:users,
+                    sender:uid,
+                    msg:"New notification",
+                    data:null,
+                    type:'group'
+                }
+                // users.forEach(user => {
+                //     items.push({
+                //         reciever: users,
+                //         sender: uid,
+                //         notification: 'Hello! its a notification a to some user.'
 
-                        reciever: user,
-                        sender: uid,
-                        notification: 'Hello! its a notification a to some user.'
-
-                    })
-                })
-                socket.emit('send-notification', JSON.stringify({
-                    notification: items
-
-                }))
+                //     })
+                // })
+                socket.emit('send-notification', JSON.stringify(notification))
             } else if (mode == 'team') {
 
                 socket.emit('send-notification', JSON.stringify({

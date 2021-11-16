@@ -8,25 +8,27 @@ const Notifications = sql.define("notifications", {
         autoIncrement: true,
         primaryKey: true
       },
-      notification: {
+      msg: {
         type: DataTypes.STRING,
-       
+        allowNull: true
+      },
+      data: {
+        type: DataTypes.JSON,
+        allowNull: true
       },
       reciever: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        // references: {
-        //   model: "users",
-        //   key:'id'
-        // } 
+        
       },
       sender:{
         type: DataTypes.INTEGER,
         allowNull: false,
-        // references: {
-        //   model: "users",
-        //   key:'id'
-        // } 
+     
+      },
+      type: {
+        type: DataTypes.STRING,
+        allowNull: true
       },
     createdAt: Sequelize.DATE,
     updatedAt: Sequelize.DATE

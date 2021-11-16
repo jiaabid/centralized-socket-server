@@ -8,25 +8,26 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true
       },
-      notification: {
+      msg: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: true
+      },
+      data: {
+        type: Sequelize.JSON,
+        allowNull: true
       },
       reciever: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        // references: {
-        //   model: "users",
-        //   key:'id'
-        // } 
+
       },
-      sender:{
+      sender: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        // references: {
-        //   model: "users",
-        //   key:'id'
-        // } 
+      },
+      type: {
+        type: Sequelize.STRING,
+        allowNull: true
       },
       createdAt: Sequelize.DATE,
       updatedAt: Sequelize.DATE
@@ -36,6 +37,6 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
 
     await queryInterface.dropTable('notifications');
-   
+
   }
 };

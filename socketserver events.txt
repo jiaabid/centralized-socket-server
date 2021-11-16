@@ -1,4 +1,4 @@
-server ip : 172.104.197.118:5000
+server ip : http://172.104.197.118:5000/
 
 
 //to join the room as you login
@@ -15,6 +15,10 @@ body : {  mode: 'chatrooms', rooms }
 //get all online users
 event: "online-users"
 type: on
+
+//retrieve online users explictly
+event:'get-online-users'
+type:'emit'
 
 
 //send notification
@@ -115,4 +119,22 @@ http://localhost:4444/chat/message/group?id=chatId
 
 #get notifications
 http://localhost:4444/notification?id=userId
+
+#send notification from server
+url:http://127.0.0.1:5000/apiNotificaion
+method: post
+body: {
+    "notifications":[
+        {
+            "reciever":2,
+            "sender":1,
+            "notification":"notifications from api"
+        },
+        {
+            "reciever":3,
+            "sender":1,
+            "notification":"notifications from api"
+        }
+    ]
+}
 

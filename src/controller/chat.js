@@ -5,7 +5,7 @@ const Messages = require("../models/message");
 const chatMessage = require('../models/chatMessage');
 const groupChatMessage = require('../models/groupChatMessage');
 const groupMessage = require('../models/groupMessage')
-const User = require("../models/user");
+// const User = require("../models/user");
 require('../models/association')
 const getChatRooms = async (req, res) => {
     try {

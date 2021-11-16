@@ -7,7 +7,6 @@ const Messages = require("../src/models/message");
 const ChatMessage = require("../src/models/chatMessage");
 const GroupMessages = require("../src/models/groupMessage");
 const Notifications = require("../src/models/notification");
-const GroupNotifications = require("../src/models/groupNotification");
 const NotificationUser = require("../src/models/notificationUser");
 const GroupChatMessage = require("../src/models/groupChatMessage");
 
@@ -37,6 +36,7 @@ module.exports = (io, socket) => {
                         })
                     console.log(connectedUsers)
                     new Promise((resolve, reject) => {
+                        
                         socket.join(`${payload.uid}`);
                         resolve()
                     }).then(_ => io.emit("online-users", JSON.stringify(connectedUsers)))
@@ -98,12 +98,27 @@ module.exports = (io, socket) => {
     //send notification
     socket.on('send-notification', async payload => {
         payload = JSON.parse(payload)
-        await insertNotification(payload.notification, socket);
+        
+        //change in structure 
+        let notification = []
+        payload.ids.forEach(id=>{
+           notification.push({
+               sender:payload.sender,
+               reciever:id,
+               msg:payload.msg,
+               data:payload.data,
+               type:payload.type
+
+           })
+        })
+        // await insertNotification(payload.notification, socket);
+        await insertNotification(notification, socket);
 
     })
 
     //sending bulk notifications
     async function insertNotification(notifications, socket) {
+
         let snap = await Notifications.bulkCreate(notifications);
 
         notifications.forEach(async item => {
@@ -112,8 +127,11 @@ module.exports = (io, socket) => {
                 user_id: item.reciever,
 
             });
-            socket.to(item.reciever).emit("notification", JSON.stringify({
-                'msg': item.notification,
+            socket.to(`${item.reciever}`).emit("notification", JSON.stringify({
+                'msg': item.msg,
+                'data':item.data,
+                'sender':item.sender,
+                'type':item.type,
                 notification_id: snap[0]["dataValues"]["id"]
 
             }))
@@ -228,18 +246,22 @@ module.exports = (io, socket) => {
             }
         });
         // return console.log(userId["dataValues"]);
-        let user = await OnlineUser.destroy({
-            where: {
-                [Op.or]: [
-                    { 'socket_id': socketId },
-                    { 'user_id': userId["dataValues"]["user_id"] },
-
-                ]
-
-            }
-        });
-        // //broadcast user has signout
+        if(userId){
+            let user = await OnlineUser.destroy({
+                where: {
+                    [Op.or]: [
+                        { 'socket_id': socketId },
+                        { 'user_id': userId["dataValues"]["user_id"] },
+    
+                    ]
+    
+                }
+            });
+            
+             // //broadcast user has signout
         io.emit("user-signout", { user: userId["dataValues"]["user_id"] })
+        }
+       
     })
 
     socket.on('create-chat', async payload => {
